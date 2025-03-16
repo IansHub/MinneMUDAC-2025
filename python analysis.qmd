@@ -1,0 +1,278 @@
+---
+title: "Novice Data Analysis"
+author: "Dennis Campoverde-Lema"
+format: html
+execute:
+  echo: false
+jupyter: python3
+---
+# **Big Brothers Big Sisters Twin Cities Match Analysis**
+
+## **Project Overview**
+This analysis explores match longevity and success within the **Big Brothers Big Sisters Twin Cities (BBBS-TC)** mentoring program. Using historical match data, we aim to identify **key factors influencing match retention, closure reasons, and overall success rates**.
+
+### **Key Objectives**
+- **Understand Match Length Distribution**: How long do matches typically last, and what trends emerge?
+- **Program Type Comparison**: Do certain mentoring programs lead to longer or more successful matches?
+- **Demographic Influences**: How do factors such as gender identity affect match duration?
+- **Match Success Rate**: What percentage of matches achieve a successful closure, and what factors contribute to this outcome?
+
+### **Key Findings**
+- Most matches **end within the first 20 months**, with **Community-Based programs** showing the longest retention.
+- **Gender differences in match length** exist, with variations in retention for **Genderqueer/Nonbinary and Trans mentors**.
+- **The match success rate is low (~10%)**, highlighting potential retention challenges.
+
+### **Implications**
+Understanding these patterns can help BBBS-TC:
+- Improve **match retention strategies**.
+- Enhance **support systems for mentors and mentees**.
+- Develop **data-driven policies** to foster long-term, impactful mentoring relationships.
+
+The following sections provide a deeper analysis of these findings, supported by visualizations and data-driven insights.
+
+
+
+```{python, echo=false}
+# Import necessary libraries
+import pandas as pd  # For data handling
+import numpy as np   # For numerical operations
+import matplotlib.pyplot as plt  # For plotting
+import seaborn as sns  # For advanced visualization
+import openpyxl  # To read .xlsx files
+
+# Ensure warnings are displayed cleanly
+import warnings
+warnings.simplefilter(action="ignore", category=FutureWarning)
+
+# Print confirmation
+print("All necessary libraries are successfully imported!")
+
+```
+
+## **Understanding the Data**
+
+### **Dataset Overview**
+The dataset contains historical match records from **Big Brothers Big Sisters Twin Cities (BBBS-TC)**. It includes **match duration, closure reasons, demographic attributes, and program types**, providing insights into the **factors affecting match retention and success**.
+
+### **Key Variables**
+| **Variable**              | **Description** |
+|---------------------------|------------------------------------------------------------------|
+| **Match Length**          | Duration of the match (in months). |
+| **Closure Reason**        | The reason the match ended (e.g., Successful Closure, Moved, Time Constraints). |
+| **Program Type**          | The mentoring program category (e.g., Community-Based, Site-Based). |
+| **Big Gender**            | Gender identity of the mentor (Big). |
+| **Little Gender**         | Gender identity of the mentee (Little). |
+| **Big Age**               | Age of the mentor at the time of match. |
+| **Little Birthdate**      | Birthdate of the mentee. |
+| **Big Race/Ethnicity**    | Racial/ethnic identity of the mentor. |
+| **Little Race/Ethnicity** | Racial/ethnic identity of the mentee. |
+| **Big Occupation**        | Profession of the mentor. |
+| **Match Activation Date** | The date the match officially started. |
+| **Match Closure Date**    | The date the match ended. |
+
+### **Data Cleaning & Preparation**
+To ensure accurate analysis, the following preprocessing steps were applied:
+- **Converted date variables** to proper datetime format for time-based analysis.
+- **Filtered relevant columns** to focus on **match length, closure reasons, and demographic factors**.
+- **Handled missing values**, ensuring that null or ambiguous data points were not included in statistical computations.
+- **Categorized closure reasons** to define **successful vs. unsuccessful matches**.
+
+### **Why This Data Matters**
+By analyzing these variables, we can:
+- Identify **predictors of long-lasting matches**.
+- Understand **why matches end early** and how to improve retention.
+- Develop **targeted strategies** to improve match success rates.
+
+```{python, echo=false}
+# Define the file path
+file_path = r"C:\Users\Dennis Campoverde-Le\Desktop\Academic\DataCompetition\MinneMUDAC2025\Novice (1).xlsx"
+
+# Load the Excel file
+xls = pd.ExcelFile(file_path)
+
+# Show available sheets
+print("Available Sheets:", xls.sheet_names)
+
+# Load the first sheet into a DataFrame
+df = pd.read_excel(xls, sheet_name='Sheet1')
+
+# Display first few rows
+df.head()
+
+```
+
+```{python, echo=false}
+# Select relevant columns for analysis
+relevant_columns = [
+    'Match Length', 'Closure Reason', 'Program Type', 'Big Gender', 'Little Gender',
+    'Big Age', 'Little Birthdate', 'Big Race/Ethnicity', 'Little Participant: Race/Ethnicity',
+    'Big Occupation', 'Match Activation Date', 'Match Closure Meeting Date'
+]
+
+df_relevant = df[relevant_columns].copy()  # Avoid SettingWithCopyWarning
+
+# Convert date columns
+date_columns = ['Match Activation Date', 'Match Closure Meeting Date', 'Little Birthdate']
+for col in date_columns:
+    df_relevant.loc[:, col] = pd.to_datetime(df_relevant[col], errors='coerce')
+
+# Display info to verify data types
+df_relevant.info()
+
+```
+
+## **Match Length Distribution Analysis**
+
+The histogram below illustrates the **distribution of match lengths** (in months) for Big Brothers Big Sisters Twin Cities (BBBS-TC). 
+
+### **Key Observations**
+- The distribution is **right-skewed**, meaning most matches tend to be **shorter in duration**, with fewer long-term matches.
+- A **high frequency of matches** fall within the **0-20 month range**, suggesting many matches do not last beyond two years.
+- The **mode** (most frequent match length) appears to be **around 10-15 months**.
+- The **tail of the distribution extends beyond 60 months**, indicating a **small number of long-lasting matches**.
+- The **density plot overlay (blue line)** provides a smooth approximation of the data, confirming that match lengths decrease as duration increases.
+
+### **Potential Implications**
+- Identifying **factors that contribute to early closures** (e.g., volunteer availability, child engagement) could help improve match retention.
+- Since **longer match durations** correlate with greater positive youth outcomes, strategies to **extend match longevity** should be explored.
+- Further analysis on **demographics, program type, and closure reasons** can reveal **predictors of successful, long-term matches**.
+
+
+```{python, echo=false}
+# Set up figure
+plt.figure(figsize=(10,5))
+sns.histplot(df_relevant['Match Length'].dropna(), bins=30, kde=True)
+plt.title("Distribution of Match Length")
+plt.xlabel("Match Length (Months)")
+plt.ylabel("Frequency")
+plt.show()
+
+```
+
+## **Match Length Across Program Types**
+
+The box plot below visualizes **match length distribution** across different **program types** in Big Brothers Big Sisters Twin Cities (BBBS-TC).
+
+### **Key Observations**
+- **Community-Based Matches** tend to last the longest, with a **median duration around 20 months** and many matches extending beyond **80+ months**.
+- **Site-Based Programs (Site & Site-Based Facilitated)** show **shorter match durations**, with the median below **10-15 months**. This suggests that **site-based matches are more temporary** compared to community-based matches.
+- **Site-Based Plus** shows a **higher median match length** than standard site-based programs, suggesting that additional engagement factors may help sustain longer-lasting mentorship.
+- **Outliers** (dots above whiskers) are observed in all categories but are **more prominent in Community-Based Programs**, indicating that some matches last significantly longer than the typical range.
+
+### **Potential Implications**
+- **Community-based programs** may be more **sustainable for long-term mentorship**, possibly due to more flexible, personal interactions beyond structured settings.
+- **Shorter durations in site-based programs** could be due to **school calendar constraints, location-based dependencies, or fewer opportunities for informal bonding**.
+- **Further investigation** into **retention strategies** for site-based programs may help **increase match longevity**.
+
+
+```{python, echo=false}
+plt.figure(figsize=(12,6))
+sns.boxplot(x="Program Type", y="Match Length", data=df_relevant)
+plt.xticks(rotation=45)
+plt.title("Match Length Across Program Types")
+plt.show()
+
+```
+
+## **Match Length by Big's Gender**
+
+The box plot below illustrates **match length distributions** based on the gender identity of the **Bigs (mentors)** in the Big Brothers Big Sisters Twin Cities (BBBS-TC) program.
+
+### **Key Observations**
+- **Male and Female Bigs** have **similar distributions**, with median match lengths around **15-20 months**.
+- **Matches with Male Bigs** tend to last slightly longer, with a **higher upper quartile** and **more matches extending beyond 80+ months**.
+- **Genderqueer/Nonbinary and Trans Male Bigs** show **shorter median match lengths**, with most matches **falling under 20 months**.
+- **Bigs who marked "Prefer not to say" or "Trans Female"** had significantly **fewer recorded matches**, making their distributions less reliable for comparison.
+- **Outliers** (dots above whiskers) indicate **some exceptionally long-lasting matches**, mostly among Male and Female Bigs.
+
+### **Potential Implications**
+- **The longer durations for Male and Female Bigs** may be due to **higher participation rates** and **more established mentoring structures**.
+- **Shorter durations for Genderqueer/Nonbinary and Trans Bigs** might indicate **challenges in long-term retention**, potentially due to **availability, support systems, or representation**.
+- **Further research into mentoring experiences across gender identities** could help **improve match longevity and inclusivity**.
+
+
+```{python, echo=false}
+plt.figure(figsize=(12,6))
+sns.boxplot(x="Big Gender", y="Match Length", data=df_relevant)
+plt.title("Match Length by Big's Gender")
+plt.show()
+
+```
+
+
+## **Match Length by Little's Gender**
+
+The box plot below illustrates the **distribution of match lengths** based on the gender identity of the **Littles (mentees)** in the Big Brothers Big Sisters Twin Cities (BBBS-TC) program.
+
+### **Key Observations**
+- **Male and Female Littles** have **similar median match lengths**, around **15-20 months**, but Male Littles show a slightly wider range of match durations.
+- **Genderqueer/Nonbinary Littles** tend to have slightly **longer median match lengths**, though the sample size appears smaller.
+- **Trans Male Littles** have **shorter match durations**, with fewer long-term matches and a lower overall range.
+- **Outliers** are visible across all gender categories, especially among Male and Female Littles, indicating that some matches last significantly longer than the median.
+
+### **Potential Implications**
+- The relatively **consistent match lengths across gender categories** suggest that **mentoring relationships are not significantly impacted by gender identity alone**.
+- The **shorter durations for Trans Male Littles** could indicate **unique challenges** in maintaining long-term mentoring relationships, such as availability of matched Bigs or external factors affecting retention.
+- **Further analysis** could explore whether specific support structures or mentoring approaches contribute to **longer match retention** for Littles of different gender identities.
+
+
+```{python, echo=false}
+plt.figure(figsize=(12,6))
+sns.boxplot(x="Little Gender", y="Match Length", data=df_relevant)
+plt.title("Match Length by Little's Gender")
+plt.show()
+
+```
+
+
+## **Match Success Rate**
+
+The bar chart below illustrates the proportion of **successful vs. unsuccessful matches** in the Big Brothers Big Sisters Twin Cities (BBBS-TC) program.
+
+### **Key Observations**
+- **The majority of matches (~90%) are classified as "Unsuccessful,"** meaning they did not meet the criteria for success (i.e., "Successful Match Closure" or "Child Graduated").
+- **Only a small proportion of matches (~10%) are classified as "Successful,"** indicating that relatively few matches persist until a recognized successful closure.
+
+### **Potential Explanations**
+- Matches may be **ending prematurely** due to external factors such as:
+  - Volunteer time constraints or relocation.
+  - Child or family disengagement.
+  - Structural barriers in certain program types.
+- The **low success rate** suggests that **match retention strategies** should be examined:
+  - What factors contribute to **longer-lasting, successful matches**?
+  - Are there demographic or program-based differences in success rates?
+  - How can BBBS-TC **support matches** to increase retention?
+
+### **Next Steps for Analysis**
+- Investigate **match duration trends**—do longer matches have higher success rates?
+- Assess **closure reasons** in unsuccessful matches to identify common patterns.
+- Explore **predictors of success**, including demographics, program type, and mentor-mentee alignment.
+
+
+```{python, echo=false}
+# Convert date columns
+date_columns = ['Match Activation Date', 'Match Closure Meeting Date', 'Little Birthdate']
+for col in date_columns:
+    df_relevant.loc[:, col] = pd.to_datetime(df_relevant[col], errors='coerce')
+
+# Define successful match closure reasons based on new information
+successful_closures = ["Successful match closure", "Child: Graduated"]
+
+# Create a new column for match success (True/False)
+df_relevant["Successful Match"] = df_relevant["Closure Reason"].isin(successful_closures)
+
+# Plot the match success rate
+plt.figure(figsize=(8, 5))
+sns.countplot(x="Successful Match", data=df_relevant)
+plt.title("Match Success Rate")
+plt.xticks(ticks=[0, 1], labels=["Unsuccessful", "Successful"])
+plt.ylabel("Count")
+plt.show()
+
+
+```
+
+
+```{python}
+
+```
