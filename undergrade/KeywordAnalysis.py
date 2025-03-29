@@ -10,7 +10,7 @@ import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer
 
 # Load your data
-df = pd.read_excel(r"Training.xlsx")
+df = pd.read_excel("Training-Restated.xlsx")
 
 # Clean column names
 df.columns = df.columns.str.strip().str.replace(" ", "_").str.lower()

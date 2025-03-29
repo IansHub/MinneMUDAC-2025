@@ -12,7 +12,7 @@ from nltk.tokenize import word_tokenize
 from collections import Counter
 
 
-BBBS_df = pd.read_excel("Training.xlsx")
+BBBS_df = pd.read_excel("./undergrade/Training-Restated.xlsx")
 #print(BBBS_df["Match Support Contact Notes"].head())
 strings_to_remove = ("Question:", "Activities:", "Answer:", "Child Safety:", "Child Development:", "Child/Volunteer Relationship development:", "Relationship with BBBS:", "Parent/Volunteer Concerns:", "Other Comments-List progress/activities in school and in JJ System:" "MSS Notes:", "Match Closing with bs via email:")
 BBBS_df["Match Support Contact Notes Cleaned"] = BBBS_df["Match Support Contact Notes"].str.replace(strings_to_remove, "")
